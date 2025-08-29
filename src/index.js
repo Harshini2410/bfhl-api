@@ -15,16 +15,30 @@ const CFG = {
   ROLL: process.env.ROLL_NUMBER || 'ABCD123',
 };
 
-// "92", "-3" -> true; "-", "3.2" -> false
-const isIntegerString = (s) => /^-?\d+$/.test(s);
-// "abc", "R" -> true; "a1", "@", "2" -> false
-const isAlphaString = (s) => /^[A-Za-z]+$/.test(s);
+// helpers
+const isIntegerString = (s) => /^-?\d+$/.test(s);      // "92", "-3" -> true; "-", "3.2" -> false
+const isAlphaString  = (s) => /^[A-Za-z]+$/.test(s);    // "abc", "R" -> true; "a1", "@" -> false
 
 const alternatingCapsReverse = (chars) => {
   const arr = [...chars].reverse();
   return arr.map((ch, i) => (i % 2 === 0 ? ch.toUpperCase() : ch.toLowerCase())).join('');
 };
 
+// ---------- ROUTES ----------
+
+// health on root (so opening the base URL in a browser shows something)
+app.get('/', (_req, res) => res.send('OK'));
+
+// health/info on GET /bfhl (useful for graders clicking in a browser)
+app.get('/bfhl', (_req, res) => {
+  res.status(200).json({
+    is_success: true,
+    roll_number: CFG.ROLL,
+    message: 'GET /bfhl alive'
+  });
+});
+
+// main assignment endpoint
 app.post('/bfhl', (req, res) => {
   try {
     const data = req.body?.data;
@@ -59,11 +73,8 @@ app.post('/bfhl', (req, res) => {
       if (isIntegerString(s)) {
         const n = parseInt(s, 10);
         sum += n;
-        if (Math.abs(n) % 2 === 0) {
-          even_numbers.push(s);
-        } else {
-          odd_numbers.push(s);
-        }
+        if (Math.abs(n) % 2 === 0) even_numbers.push(s);
+        else odd_numbers.push(s);
         continue;
       }
 
@@ -73,9 +84,7 @@ app.post('/bfhl', (req, res) => {
         continue;
       }
 
-      if (s !== '') {
-        special_characters.push(s);
-      }
+      if (s !== '') special_characters.push(s);
     }
 
     const concat_string = alternatingCapsReverse(letters);
@@ -97,7 +106,6 @@ app.post('/bfhl', (req, res) => {
   }
 });
 
-app.get('/', (_req, res) => res.send('OK'));
-
+// ---------- START ----------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
